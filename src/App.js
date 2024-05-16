@@ -1,73 +1,94 @@
-import React, { useState, useEffect } from "react";
-import "./App.css";
-import Card from "./card/card";
+// App.js
+import React, { useState, useEffect } from 'react';
+import './App.css';
+import Card from './card/card';
+import axios from 'axios';
 
 const App = () => {
-  const [tasks, setTasks] = useState([
-    { id: 1, text: "Complete assignment", completed: false,time: "12:30" },
-    { id: 2, text: "Buy groceries", completed: true ,time: "6:30"},
-    { id: 3, text: "Call mom", completed: false,time: "8:30" },
-    { id: 4, text: "Go for a run", completed: true,time: "09:30"},
-    { id: 5, text: "Read a book", completed: false ,time: "10:30"},
-  ]);
-  const [newTask, setNewTask] = useState("");
-  const [newTaskTime, setNewTaskTime] = useState("");
-
+  const [tasks, setTasks] = useState([]);
+  const [newTask, setNewTask] = useState('');
+  const [newTaskTime, setNewTaskTime] = useState('');
   const [editTaskId, setEditTaskId] = useState(null);
-  const [editedTaskText, setEditedTaskText] = useState("");
+  const [editedTaskText, setEditedTaskText] = useState('');
 
+  useEffect(() => {
+    fetchTasks();
+  }, []);
+
+  const fetchTasks = async () => {
+    try {
+      const response = await axios.get('https://task-manager-server-kappa-eosin.vercel.app/api/tasks');
+      setTasks(response.data);
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+    }
+  };
 
   const handleNewTaskChange = (e) => {
     setNewTask(e.target.value);
   };
+
   const handleNewTaskChangeTime = (e) => {
     setNewTaskTime(e.target.value);
   };
 
-  const addTask = () => {
-    if (newTask.trim() !== "") {
-      setTasks([...tasks, { id: Date.now(), text: newTask, completed: false ,time: newTaskTime}]);
-      setNewTask("");
-      setNewTaskTime("");
+  const addTask = async () => {
+    if (newTask.trim() !== '') {
+      try {
+        const response = await axios.post('https://task-manager-server-kappa-eosin.vercel.app/api/tasks', { text: newTask, time: newTaskTime });
+        setTasks([...tasks, response.data]);
+        setNewTask('');
+        setNewTaskTime('');
+      } catch (error) {
+        console.error('Error adding task:', error);
+      }
     }
   };
 
-  const toggleTaskCompletion = (taskId) => {
-    setTasks(
-      tasks.map((task) =>
-        task.id === taskId ? { ...task, completed: !task.completed } : task
-      )
-    );
+  const toggleTaskCompletion = async (taskId) => {
+    try {
+      const task = tasks.find((task) => task._id === taskId);
+      const response = await axios.put(`https://task-manager-server-kappa-eosin.vercel.app/api/tasks/${taskId}`, { ...task, completed: !task.completed });
+      setTasks(tasks.map((task) => (task._id === taskId ? response.data : task)));
+    } catch (error) {
+      console.error('Error toggling task completion:', error);
+    }
   };
 
-  const deleteTask = (taskId) => {
-    setTasks(tasks.filter((task) => task.id !== taskId));
+  const deleteTask = async (taskId) => {
+    try {
+      await axios.delete(`https://task-manager-server-kappa-eosin.vercel.app/api/tasks/${taskId}`);
+      setTasks(tasks.filter((task) => task._id !== taskId));
+    } catch (error) {
+      console.error('Error deleting task:', error);
+    }
   };
 
   const handleEditChange = (e) => {
     setEditedTaskText(e.target.value);
   };
 
-
   const startEditing = (taskId, taskText) => {
     setEditTaskId(taskId);
     setEditedTaskText(taskText);
   };
 
-  const finishEditing = (taskId) => {
-    setTasks(
-      tasks.map((task) =>
-        task.id === taskId ? { ...task, text: editedTaskText } : task
-      )
-    );
-    setEditTaskId(null);
+  const finishEditing = async (taskId) => {
+    try {
+      const task = tasks.find((task) => task._id === taskId);
+      const response = await axios.put(`https://task-manager-server-kappa-eosin.vercel.app/api/tasks/${taskId}`, { ...task, text: editedTaskText });
+      setTasks(tasks.map((task) => (task._id === taskId ? response.data : task)));
+      setEditTaskId(null);
+    } catch (error) {
+      console.error('Error finishing editing task:', error);
+    }
   };
 
   return (
     <>
       <div className="Container roboto-mono-normal">
         <div className="header">
-          <div className="heading  ">
+          <div className="heading">
             <div className="heading-content">Task Manager</div>
           </div>
         </div>
@@ -85,12 +106,16 @@ const App = () => {
               />
               <button onClick={addTask}>Add Task</button>
             </div>
-           <div className="timeInput">
-          <label   htmlFor="appt"> start time:</label>
-  <input value={newTaskTime} onChange={handleNewTaskChangeTime} type="time" id="appt" name="appt" />
-
-</div>
-
+            <div className="timeInput">
+              <label htmlFor="appt">Start time:</label>
+              <input
+                value={newTaskTime}
+                onChange={handleNewTaskChangeTime}
+                type="time"
+                id="appt"
+                name="appt"
+              />
+            </div>
           </div>
         </div>
         <div className="content">
@@ -98,57 +123,38 @@ const App = () => {
             <div className="leftContentContainer">
               <div className="addTaskHeading">Tasks</div>
               <div className="leftcards">
-                {/* <Card />
-                <div className="buttons">
-                  <button>Edit</button>
-                  <button>Delete</button>
-                </div> */}
-                {tasks.reverse().map((task) => (
-                  <>
-                    {editTaskId === task.id ? (
+                {tasks.slice().reverse().map((task) => (
+                  <div key={task._id} className="containerCard">
+                    {editTaskId === task._id ? (
                       <>
                         <input
-                        className="Edit"
+                          className="Edit"
                           type="text"
                           value={editedTaskText}
                           onChange={handleEditChange}
                         />
-                         <div className="buttons">
-                         <button onClick={() => finishEditing(task.id)}>
-                          Save
-                        </button>
-                         </div>
-                        
+                        <div className="buttons">
+                          <button onClick={() => finishEditing(task._id)}>Save</button>
+                        </div>
                       </>
                     ) : (
-                      <div className="containerCard">
-                      <input
+                      <>
+                        <input
                           type="checkbox"
                           checked={task.completed}
-                          onChange={() => toggleTaskCompletion(task.id)}
-                          style={{marginLeft:"0.3vh"}}
+                          onChange={() => toggleTaskCompletion(task._id)}
+                          style={{ marginLeft: '0.3vh' }}
                         />
-                     <div className="cardCover">
-                     <Card text={task.text} time={task.time} />
-                     </div>
-
-                      
-                       
-
-                        <div className="Tbuttons">
-                        <button
-                          onClick={() => startEditing(task.id, task.text)}
-                        >
-                          Edit
-                        </button>
-                        <button onClick={() => deleteTask(task.id)}>Delete</button>
-                        
+                        <div className="cardCover">
+                          <Card text={task.text} time={task.time} />
                         </div>
-                        
-                      </div>
+                        <div className="Tbuttons">
+                          <button onClick={() => startEditing(task._id, task.text)}>Edit</button>
+                          <button onClick={() => deleteTask(task._id)}>Delete</button>
+                        </div>
+                      </>
                     )}
-                   
-                  </>
+                  </div>
                 ))}
               </div>
             </div>
@@ -158,39 +164,19 @@ const App = () => {
               <div className="RightContentContainerTop">
                 <div className="addTaskHeading">Completed</div>
                 <div className="leftcards">
-                {tasks.map((task) => (
-                  <>
-                    {task.completed === true ? (
-                      <>
-                      <Card text={task.text} />
-                      </>
-                    ) : (
-                      <>                     
-                      </>
-                    )}
-                   
-                  </>
-                ))}
+                  {tasks.filter((task) => task.completed).map((task) => (
+                    <Card key={task._id} text={task.text} time={task.time} />
+                  ))}
                 </div>
               </div>
             </div>
             <div className="incomplete">
               <div className="RightContentContainerBottom">
-                <div className="addTaskHeading">InComplete</div>
+                <div className="addTaskHeading">Incomplete</div>
                 <div className="leftcards">
-                {tasks.map((task) => (
-                  <>
-                    {task.completed === false ? (
-                      <>
-                      <Card text={task.text} />
-                      </>
-                    ) : (
-                      <>                     
-                      </>
-                    )}
-                   
-                  </>
-                ))}
+                  {tasks.filter((task) => !task.completed).map((task) => (
+                    <Card key={task._id} text={task.text} time={task.time} />
+                  ))}
                 </div>
               </div>
             </div>

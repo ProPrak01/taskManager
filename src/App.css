@@ -246,12 +246,14 @@ button:hover{
   
   
   overflow: scroll;
-
+  -ms-overflow-style: none; 
+  scrollbar-width: none;
   
 }
 .leftContentContainer::-webkit-scrollbar{
   display: none;
 }
+
 .buttons{
   display: flex;
   
