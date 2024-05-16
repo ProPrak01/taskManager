@@ -1,0 +1,25 @@
+.card{
+    background-color: rgb(123, 114, 222);
+    width: 90%;
+    height: 5vh;
+    margin: 1vh 0.5vh;
+    
+    border: 3px solid black;
+    border-radius: 10px;
+    transition: 0.4s;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+.card:hover{
+    transform: scale(1.02);
+}
+.timeShow{
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    font-size: 1vh;
+    padding: 0.5vh;
+}
