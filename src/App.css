@@ -266,14 +266,15 @@ button:hover{
    width: 25%;
    flex-flow: column;
 justify-content: center;
-font-size: small;
+
 }
 .cardCover{
   width: 70%;
 }
 .Tbuttons button{
   color: azure;
-  font-weight: 800;
+  font-weight: 600;
+  font-size:1vh;
   padding: 0.5vh 1vh;
   background-color:rgb(100, 1, 200) ;
   border: 0.4vh solid rgb(25, 25, 25);
